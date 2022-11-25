@@ -1,0 +1,19 @@
+{
+    "colors": {
+        "pink_neon" : "#fb0072",
+        "preto_neon": "#020202",
+        "cinza_claro": "#c2c2c2",
+        "rosa_choque": "#C61357",
+        "violeta": "#c493ff",
+        "verde_agua": "#00ffbc",
+        "azul_branco": "#E0FFFF",
+        "powder_blue": "#B0E0E6",
+        "azul_depth": "#191970",
+        "branco_comum": "#ffffff",
+        "branco_neon": "#f0eeee"
+    },
+    "screen":{
+        "width" : 1280,
+        "height": 720
+    }
+}
