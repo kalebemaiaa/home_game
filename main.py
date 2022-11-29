@@ -199,7 +199,82 @@ class BoxText():
                 self.y_text[1] += he
             
             self.conteudo_texto += key_word
+
+class Box():
+    def __init__(self, largura, altura):
+        self.largura = largura
+        self.altura = altura 
+
+    def draw(self,surface, coordenada, background_color, centralizado = False, box_shadow = None, borda = None):
+        self.x = coordenada[0] 
+        self.y = coordenada[1]
+        self.background_color = background_color
+        tmp = 0
+
+        if centralizado:
+            self.x -= self.largura / 2
+            self.y -= self.altura / 2
+
+        ret_inside = [self.x, self.y, self.largura, self.altura]
+
+        ret_bordas = []
+
+        if not borda is None:
+            espessura = borda[0]
+            x_start, x_end = self.x - espessura, self.x + self.largura
+            y_start, y_end = self.y - espessura, self.y + self.altura
+
+            ret_bordas = [[x_start, y_start, espessura, self.altura + 2 * espessura],
+                            [self.x, y_start, self.largura, espessura],
+                            [self.x, y_end, self.largura, espessura],
+                            [x_end, y_start, espessura, self.altura + 2 * espessura]]
+
+            tmp = espessura
+
+        if not box_shadow is None:
+            x_bs, y_bs = box_shadow[0], box_shadow[1]
+            ret_box_shadow = [self.x + x_bs, self.y + y_bs, self.largura + tmp, self.altura + tmp]
+
+            pygame.draw.rect(surface, box_shadow[2], ret_box_shadow)
         
+        pygame.draw.rect(surface, self.background_color, ret_inside)
+
+        for ret in ret_bordas:
+            pygame.draw.rect(surface, borda[1], ret)
+
+class Text():
+    def __init__(self, texto, font_family, font_size, color):
+        self.font = pygame.font.Font(font_family , font_size)
+        self.conteudo_texto = texto
+        self.texto_renderizado = self.font.render(texto, False, color)
+        self.rect = self.texto_renderizado.get_rect()
+
+    def draw(self, surface, coordenada, text_shadow=None, background_color=None, centralizado=False, box_shadow=None, borda=None, padding = 5):
+        if background_color is None:
+            x, y = coordenada
+            if centralizado:
+                x = coordenada[0] - self.rect.width / 2
+                y = coordenada[1] - self.rect.height / 2
+            
+            if not text_shadow is None:
+                texto = self.font.render(self.conteudo_texto, False, text_shadow[2])
+                surface.blit(texto, (x + text_shadow[0], y + text_shadow[1]))
+            surface.blit(self.texto_renderizado, (x, y))
+            return 
+
+        box_bg = Box(self.rect.width + 2 * padding, self.rect.height + 2 * padding)
+        box_bg.draw(surface=surface, coordenada=coordenada,background_color=background_color, centralizado=centralizado, box_shadow=box_shadow, borda=borda)
+        
+    
+        x = box_bg.x + (box_bg.largura - self.rect.width) / 2 
+        y = box_bg.y + (box_bg.altura - self.rect.height) / 2 
+
+        if not text_shadow is None:
+            texto = self.font.render(self.conteudo_texto, False, text_shadow[2])
+            surface.blit(texto, (x + text_shadow[0], y + text_shadow[1]))
+
+        surface.blit(self.texto_renderizado, (x, y))
+
 class Game():
     def __init__(self):
         #starta pygame modulo
@@ -228,7 +303,7 @@ class Game():
         # self.cursor_mouse = pygame.image.load("img/icon_mouse.png").convert()
         
         #ajusta fonte
-        self.font_family = pygame.font.Font("config/PressStart2p.ttf", 32)
+        self.font_family = "config/PressStart2p.ttf"
         
         #coloca o titulo
         pygame.display.set_caption("Welcome")
@@ -285,18 +360,38 @@ class Game():
             self.componentes.append(container)
         container.draw(self.tela, "#ffffff", self.colors["preto_neon"], (self.width/2 - container.largura/2, (self.heigth - container.altura)/2), borda = (3, converte_cor("#f0eeee")))
     
+    def draw_cenario(self):
+        # PS: se as bordas nao alterarem a largura e altura nao é preciso de dois bg_life
+        bg_life= Box(self.width * .35, self.heigth * .05)
+        x = (self.width * .05, self.width * .95 - bg_life.largura )
+        y = self.heigth * .05
+        bg_life.draw(coordenada = (x[0],y), surface = self.tela, background_color = self.colors["violeta"], borda = [5, self.colors["azul_depth"]])
+        bg_life.draw(coordenada = (x[1],y), surface = self.tela, background_color = self.colors["violeta"], borda = [5, self.colors["azul_depth"]])
+        life_p1 = Box(self.width * .2, self.heigth * .05)
+        life_p2 = Box(self.width * .3, self.heigth * .05)
+        life_p1.draw(coordenada = (x[0], y), surface = self.tela, background_color = self.colors["pink_neon"])
+        life_p2.draw(coordenada = (x[1], y), surface = self.tela, background_color = self.colors["pink_neon"])
+
+        self.componentes.append(life_p1)
+        self.componentes.append(life_p2)
+
+        texto_teste = Text("VS", self.font_family, font_size= 40, color = self.colors["preto_neon"])
+        texto_teste.draw(self.tela, (self.width /2, self.heigth * .1), centralizado= True, text_shadow=[3,3, self.colors["coral"]] )
+
     def loop(self):
         while self.run:
             self.relogio.tick(12)
             x, y = pygame.mouse.get_pos()
-                
+            
             if not self.desenhada:
-                self.tela.fill(self.colors["verde_agua"])
+                self.background_color = self.colors["verde_agua"]
+                self.tela.fill(self.background_color )
                 #self.dialogo_box(once = True)    
                 #self.menu_draw(once = True)
                 #self.get_name(once = True)
                 #self.short_menu(once = True)
-                
+                self.draw_cenario()
+
                 pygame.display.flip()
                 self.desenhada = True
             
